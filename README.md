@@ -1,30 +1,109 @@
-# スイカゲーム開発
+# スイカゲーム
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+Next.jsで作成したスイカゲーム（フルーツマージパズル）です。
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/gakushis-projects/v0-)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/uPpHOzI4Olk)
+## GitHub Pagesへのデプロイ方法
 
-## Overview
+### 1. リポジトリの設定
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+next.config.mjsの`basePath`を設定してください：
 
-## Deployment
+\`\`\`js
+basePath: '/your-repo-name',
+\`\`\`
 
-Your project is live at:
+例：リポジトリ名が`suika-game`の場合
+\`\`\`js
+basePath: '/suika-game',
+\`\`\`
 
-**[https://vercel.com/gakushis-projects/v0-](https://vercel.com/gakushis-projects/v0-)**
+ルートドメイン（username.github.io）で公開する場合は、basePathの設定は不要です。
 
-## Build your app
+### 2. ビルド
 
-Continue building your app on:
+\`\`\`bash
+npm run build
+\`\`\`
 
-**[https://v0.app/chat/uPpHOzI4Olk](https://v0.app/chat/uPpHOzI4Olk)**
+ビルドが完了すると、`out`ディレクトリに静的ファイルが生成されます。
 
-## How It Works
+### 3. GitHub Pagesの設定
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+1. GitHubリポジトリの「Settings」→「Pages」に移動
+2. Source: 「GitHub Actions」を選択
+3. 以下のワークフローファイルを作成
+
+`.github/workflows/deploy.yml`を作成：
+
+\`\`\`yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+\`\`\`
+
+### 4. デプロイ
+
+mainブランチにプッシュすると、自動的にGitHub Pagesにデプロイされます。
+
+## ローカル開発
+
+\`\`\`bash
+# 開発サーバーを起動
+npm run dev
+
+# ブラウザで http://localhost:3000 を開く
+\`\`\`
+
+## ゲームの遊び方
+
+1. 画面上部から落下する次のフルーツを確認
+2. クリック（タップ）してフルーツを落とす
+3. 同じフルーツ同士が接触すると、より大きなフルーツにマージされる
+4. 最終目標はスイカを作ること
+5. フルーツが上限ラインを超えるとゲームオーバー
